@@ -1,35 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import './App.css';
+import { fetchAuthors } from './requests/api/author/authorRequests';
+import { Author } from './requests/api/author/author.typings';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [authors, setAuthors] = useState<Author[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    fetchAuthors()
+      .then((data) => {
+        console.log("Fetched Authors:", data);
+        setAuthors(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching authors:", err.response?.data || err.message);
+        setError(err.response?.data?.message || err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) return <p>Loading authors...</p>;
+  if (error) return <p>Error loading authors: {error}</p>;
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div>
+      <h2>Author List</h2>
+      <ul>
+        {authors.map((author) => {
+          if (!author || !author.name) return null; // Prevents crashes if undefined
+
+          return (
+            <li key={author.id}>
+              <strong>{author.name}</strong> - {author.email}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }
 
-export default App
+export default App;
